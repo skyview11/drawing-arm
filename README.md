@@ -1,4 +1,6 @@
 # Drawing Robot Arm algorithm
+
+### Caution: NO ROBOT RUNNING CODE IN THIS REPO. ONLY DRAWING ALGORITHM IS PRESENTED
 1. Capture the image
 2. Get edge information using Canny Edge Detection
 3. Start from left bottom, sequentially search nearby edge pixel and save the path.
