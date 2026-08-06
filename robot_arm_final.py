@@ -54,33 +54,14 @@ line_info = []
 ckVec = np.zeros(edge_img.shape) # 비면 0, 선 시작은 2, 선 중간은 1, 단일픽셀로 지워진 경우 3(길이가 1인 파티클)
 line_info = []
 
-path_extractor = PathExtractor(edge_img)
+pathExtractor = PathExtractor(edge_img)
 
 # STEP2 이미지를 그리기 위한 선의 궤적을 추출한다. 
 #1 이미지의 모든 픽셀이 선으로 표현 가능하도록 한다.
 progress_num = 0
-ckVec = erase_noise(edge_img, ckVec)
-while True:
-    for j in range(50):
-        line_info, ckVec = lining(edge_img, line_info, ckVec)
-    
-    
-    # print_img(ckVec, line_info, f"img_{progress_num}", True) 중간 과정 출력하고 싶을 때 사용
-    progress_num+=1
-    if imgIsEmpty(edge_img, ckVec) or progress_num==1000:
-        break
+pathExtractor.erase_noise()
+line_clear = pathExtractor.extract()
 
-#2 길이가 짧은 선(10 이하)를 노이즈로 간주하고 제거한다. 
-noise_len = 10 # 필수적인 선이 지워지는 경우 크기를 줄여본다. 
-line_clear = noise_del(line_info, noise_len)
-
-#3 총 선의 개수 출력
-line_num=0
-for i in line_clear:
-    if i == 100:
-        continue
-    line_num+=1
-print(f" Total Line number: {line_num}")
 
 # STEP3 얻은 데이터를 출력한다. 
 #1 최종 이미지 출력

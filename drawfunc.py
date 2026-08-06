@@ -10,7 +10,6 @@ PIXEL_UNVISITED      = 0   # 아직 탐색하지 않은 픽셀
 PIXEL_PATH           = 1   # 선의 중간 픽셀
 PIXEL_STARTPOINT     = 2   # 선의 시작점
 PIXEL_NOISE          = 3   # 노이즈(파티클)로 판명된 픽셀
-PIXEL_DISCARDED      = 4   # 탐색했지만 의미 없는 픽셀
 
 def next_pixel(now_pos, vec):
 
@@ -54,12 +53,7 @@ def search_start_point(edge_img, ckVec):
 
 
 # lining function
-def lining(edge_img, line_info, ckVec):
-    ## 선 종결 조건이 까다로워서, 그냥 겉에 한 겹을 0으로 다 바꾸기로 함. 
-    edge_img[0:2] = 0
-    edge_img[-3:]=0
-    edge_img[:,0:2]=0
-    edge_img[:,-3:]=0
+def lining(edge_img, ckVec):
     line = [] # 새로운 선 성분을 저장하는 list
     
     # start point를 line에 추가, ckVec 업데이트 수행
@@ -106,9 +100,6 @@ def lining(edge_img, line_info, ckVec):
         assert vec <= 7, "CheckNextPixelError: Too big variable 'vec'!"
         
         if (i == 7 and checkCross < 3): # 선이 종결된 경우
-            if (len(line_info)+1) % 10 == 0:
-                print("Line " + str(len(line_info)+1) + " done!")
-           
             break
             
         elif (i == 7): # 교차 확인 시 진행
@@ -147,8 +138,8 @@ def lining(edge_img, line_info, ckVec):
             # print(vec)
             pass
         
-    line_info.append(line)       
-    return line_info, ckVec
+       
+    return line, ckVec
 
 
 def noise_del(line_info, threshold):
