@@ -5,7 +5,12 @@ from drawfunc import *
 import os
 from arguments import *
 from edge_detector import EdgeDetector
+from path_extractor import PathExtractor
 IMG_HEIGHT=500 # fix the image height
+
+DIR= {
+    0:"U", 1:"UR", 2:"R", 3:"DR", 4:"D", 5:"DL", 6:"L", 7:"UL"
+}
 
 ## STEP 1: Read image
 print("Type input image path Here: ", end=" ")
@@ -40,22 +45,26 @@ plt.imshow(edge_img)
 
 
 ## STEP 3: Get the path that robot arm should move
+
+
 #2 line_info[[sp1, sp2], d1, d2, ...]
 line_info = []
 
 #3 check layer: ckVec
-ckVec = np.zeros(edge_img.shape) # 비면 0, 선 시작은 2, 선 중간은 1, 단일픽셀로 지워진 경우 3
+ckVec = np.zeros(edge_img.shape) # 비면 0, 선 시작은 2, 선 중간은 1, 단일픽셀로 지워진 경우 3(길이가 1인 파티클)
 line_info = []
 
+path_extractor = PathExtractor(edge_img)
 
 # STEP2 이미지를 그리기 위한 선의 궤적을 추출한다. 
 #1 이미지의 모든 픽셀이 선으로 표현 가능하도록 한다.
 progress_num = 0
+ckVec = erase_noise(edge_img, ckVec)
 while True:
     for j in range(50):
         line_info, ckVec = lining(edge_img, line_info, ckVec)
     
-    ckVec = erase_noise(edge_img, ckVec)
+    
     # print_img(ckVec, line_info, f"img_{progress_num}", True) 중간 과정 출력하고 싶을 때 사용
     progress_num+=1
     if imgIsEmpty(edge_img, ckVec) or progress_num==1000:

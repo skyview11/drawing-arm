@@ -2,77 +2,68 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+DIR= {
+    0:"U", 1:"UR", 2:"R", 3:"DR", 4:"D", 5:"DL", 6:"L", 7:"UL"
+}
 
-# now_pos와 num을 입력해 주면 대응하는 다음 좌표 반환
+PIXEL_UNVISITED      = 0   # 아직 탐색하지 않은 픽셀
+PIXEL_PATH           = 1   # 선의 중간 픽셀
+PIXEL_STARTPOINT     = 2   # 선의 시작점
+PIXEL_NOISE          = 3   # 노이즈(파티클)로 판명된 픽셀
+PIXEL_DISCARDED      = 4   # 탐색했지만 의미 없는 픽셀
+
 def next_pixel(now_pos, vec):
-    
-    if vec == 7:
-        return [now_pos[0]-1, now_pos[1]-1]
-    elif vec == 0:
-        return [now_pos[0]-1, now_pos[1]  ]
-    elif vec == 1:
-        return [now_pos[0]-1, now_pos[1]+1]
-    elif vec == 2:
-        return [now_pos[0]  , now_pos[1]+1]
-    elif vec == 3:
-        return [now_pos[0]+1, now_pos[1]+1]
-    elif vec == 4:
-        return [now_pos[0]+1, now_pos[1]  ]
-    elif vec == 5:
-        return [now_pos[0]+1, now_pos[1]-1]
-    elif vec == 6:
-        return [now_pos[0]  , now_pos[1]-1]
-    else: 
 
-        assert 0, "Wrong input on function 'next_pixel' "
+    if vec == 7 or vec == "UL":
+        return [now_pos[0]-1, now_pos[1]-1]
+    elif vec == 0 or vec == "U":
+        return [now_pos[0]-1, now_pos[1]]
+    elif vec == 1 or vec == "UR":
+        return [now_pos[0]-1, now_pos[1]+1]
+    elif vec == 2 or vec == "R":
+        return [now_pos[0], now_pos[1]+1]
+    elif vec == 3 or vec == "DR":
+        return [now_pos[0]+1, now_pos[1]+1]
+    elif vec == 4 or vec == "D":
+        return [now_pos[0]+1, now_pos[1]]
+    elif vec == 5 or vec == "DL":
+        return [now_pos[0]+1, now_pos[1]-1]
+    elif vec == 6 or vec == "L":
+        return [now_pos[0], now_pos[1]-1]
+    else:
+        assert 0, "Wrong input on function 'next_pixel'"
 
 
 
 # start point serch function
 
-def spSerch(edge_img, ckVec):
+def search_start_point(edge_img, ckVec):
     img_shape = edge_img.shape
 
     spExist = False
-
-    # 테두리를 모두 비우는 과정
-    for k in range(edge_img.shape[0]):
-        edge_img[k][ 0] = 0
-        edge_img[k][-1] = 0
-    for l in range(edge_img.shape[1]):
-        edge_img[ 0][l] = 0
-        edge_img[-1][l] = 0
     
     # find the initial point
-    for i in range(img_shape[0]-1, 0, -1):
-        for j in range(img_shape[1]):
-            if (edge_img[i][j] != 0 and ckVec[i][j] == 0) :
-                sp = [i, j]
-                ckVec[i][j] = 2
-                spExist = True
-                break
-
-                
-        if edge_img[i][j] != 0:
-            break
-            
-    # print(sp)
-    if spExist:
-        return sp, ckVec
-    else:
+    mask = ckVec==PIXEL_UNVISITED
+    
+    coords = np.argwhere(edge_img&mask)
+    if len(coords)==0: # 모든 픽셀이 탐색되어 더 이상 탐색할 픽셀이 없는 경우
         return [-1, -1], ckVec
+    r, c = coords[np.lexsort((coords[:, 1], -coords[:, 0]))][0]
+    ckVec[r, c] = PIXEL_STARTPOINT
+    return [r, c], ckVec
+
 
 # lining function
 def lining(edge_img, line_info, ckVec):
     ## 선 종결 조건이 까다로워서, 그냥 겉에 한 겹을 0으로 다 바꾸기로 함. 
     edge_img[0:2] = 0
-    edge_img[-3:-1]=0
+    edge_img[-3:]=0
     edge_img[:,0:2]=0
-    edge_img[:,-3:-1]=0
+    edge_img[:,-3:]=0
     line = [] # 새로운 선 성분을 저장하는 list
     
     # start point를 line에 추가, ckVec 업데이트 수행
-    sp, ckVec = spSerch(edge_img, ckVec)
+    sp, ckVec = search_start_point(edge_img, ckVec)
     if sp[0]==-1:
         assert "No sp ERROR!"
     line.append(sp)
@@ -94,7 +85,7 @@ def lining(edge_img, line_info, ckVec):
             
             # print(ckPix)
             if ((ckVec[ckpt[0]][ckpt[1]] == 0) and (ckPix != 0)): #체크벡터가 0이고, 검증할 점에 색이 있으면
-                line.append(vec) # 선에 이동 방향 저장
+                line.append(DIR[vec]) # 선에 이동 방향 저장
                 ckVec[ckpt[0]][ckpt[1]] = 1 # ckVec 업데이트
                 now_pos = ckpt
                 # print('1')
@@ -124,7 +115,7 @@ def lining(edge_img, line_info, ckVec):
             buffer = 0
             for k in range(2):
                 now_pos = next_pixel(now_pos, vec) # 진행 방향으로 일단 한 픽셀 이동하여 그 주위를 검토
-                line.append(vec)
+                line.append(DIR[vec])
                 for j in range(8):
 
                     ckpt = next_pixel(now_pos, vec) # 검증할 점의 좌표
@@ -133,7 +124,7 @@ def lining(edge_img, line_info, ckVec):
 
 
                     if ((ckVec[ckpt[0]][ckpt[1]] == 0) and (ckPix != 0)): #체크벡터가 0이고, 검증할 점에 색이 있으면
-                        line.append(vec) # 선에 이동 방향 저장
+                        line.append(DIR[vec]) # 선에 이동 방향 저장
                         ckVec[ckpt[0]][ckpt[1]] = 1 # ckVec 업데이트
                         now_pos = ckpt
                         buffer = 1
