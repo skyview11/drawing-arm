@@ -12,4 +12,3 @@ def config_parser():
                         help="Whether operate noise_del function")
     parser.add_argument("--noiseLen", type=int, default=10,
                         help="threshold of lenght of nosie")
-    
