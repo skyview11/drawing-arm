@@ -4,23 +4,28 @@ import matplotlib.pyplot as plt
 from drawfunc import *
 import os
 from arguments import *
-# STEP1 이미지 호출 및 변수 정의
+from edge_detector import EdgeDetector
+IMG_HEIGHT=500 # fix the image height
 
-#1 edge_img
+## STEP 1: Read image
+print("Type input image path Here: ", end=" ")
 img_path = input()
 if img_path.split('.')[-1] != 'jpg' and img_path.split('.')[-1] != 'png':
     assert 0, f"only jpg and png avilable, {img_path.split('.')[-1]} is wrong type!"
 
-scale = 100
 img = cv2.imread(img_path)
+if img is None:
+    raise ValueError(f"Failed to read image: {img_path}")
+
+
 if (img.shape[0] < img.shape[1]):
-    img = cv2.resize(img, (scale, scale * img.shape[0]//img.shape[1]))
+    img = cv2.resize(img, (IMG_HEIGHT, IMG_HEIGHT * img.shape[0]//img.shape[1]))
 else:
-    img = cv2.resize(img, (scale * img.shape[1]//img.shape[0], scale))
-print(img.shape)
-threshold1 = 500
-threshold2 = 500
-edge_img = cv2.Canny(img, threshold1, threshold2)
+    img = cv2.resize(img, (IMG_HEIGHT * img.shape[1]//img.shape[0], IMG_HEIGHT))
+
+## STEP 2: Get Edge
+edge_detector = EdgeDetector(img)
+edge_img = edge_detector.detect()
 
 img_name = img_path.split('.')[-2].split('/')[-1]
 save_path = os.path.join(os.path.split(img_path)[0], img_name)
@@ -30,8 +35,11 @@ if not os.path.isdir(save_path):
 
 # edge_img = 255 - edge_img
 cv2.imwrite(os.path.join(save_path, f'{img_name}_edge.jpg'), edge_img)
-# plt.imshow(edge_img)
+plt.imshow(edge_img)
 
+
+
+## STEP 3: Get the path that robot arm should move
 #2 line_info[[sp1, sp2], d1, d2, ...]
 line_info = []
 

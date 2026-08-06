@@ -64,6 +64,11 @@ def spSerch(edge_img, ckVec):
 
 # lining function
 def lining(edge_img, line_info, ckVec):
+    ## 선 종결 조건이 까다로워서, 그냥 겉에 한 겹을 0으로 다 바꾸기로 함. 
+    edge_img[0:2] = 0
+    edge_img[-3:-1]=0
+    edge_img[:,0:2]=0
+    edge_img[:,-3:-1]=0
     line = [] # 새로운 선 성분을 저장하는 list
     
     # start point를 line에 추가, ckVec 업데이트 수행
